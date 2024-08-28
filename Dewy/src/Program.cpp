@@ -192,17 +192,25 @@ void Program::AttachClickedComponent(int i)
 			if (connectionComponent == NULL)
 			{
 				std::cout << "pressed";
-				if (component->connectedTo != NULL)
+				bool output = false;
+				if (component->connectedTo != NULL && !component->outPutComponenet)
+				{
 					component->connectedTo->connectedTo = NULL;
+					output = true;
+				}
 				component->connectedTo = NULL;
+
+				if (!output)
+				{
 
 				connectionComponent = component;
 				holdingComponent = true;
+				}
 			}
 
 			else if (component->parentEntity != connectionComponent->parentEntity && (connectionComponent->outPutComponenet && !component->outPutComponenet || !connectionComponent->outPutComponenet && component->outPutComponenet))
 			{
-				if (component->connectedTo != NULL)
+				if (component->connectedTo != NULL && component->connectedTo->outPutComponenet)
 					component->connectedTo->connectedTo = NULL;
 
 				component->connectedTo = connectionComponent;
