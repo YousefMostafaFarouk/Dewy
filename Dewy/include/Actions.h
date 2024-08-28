@@ -1,0 +1,16 @@
+#pragma once
+
+enum class Action
+{
+	NONE,
+	DROP_IN_CANVAS,
+	DROP_IN_MENU,
+	MOVE_OBJ,
+	COPIED,
+	PASTED,
+	SELECTED,
+	DELETED,
+	CLICK_COMPONENT,
+	CLICK_OBJ,
+	REMOVE_OBJ,
+};
