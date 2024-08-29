@@ -2,19 +2,26 @@
 #include "iostream"
 #include "imgui_impl_glfw.h"
 
+int InputHandler::m_width = 1280;
+int InputHandler::m_height = 720;
 double InputHandler::mouseXPos = 0;
 double InputHandler::mouseYPos = 0;
+float InputHandler::m_zoomLevel = 1;
+glm::mat4  InputHandler::m_proj;
 
 InputEvents InputHandler::currentInputEvent = InputEvents::NONE;
 InputEvents InputHandler::previousInputEvent = InputEvents::NONE;
 
 bool InputHandler::m_inputReceived = false;
+bool InputHandler::m_zoomUsed = false;
 
-InputHandler::InputHandler(GLFWwindow* window) : m_window(window)
+InputHandler::InputHandler(GLFWwindow* window)
 {
-	glfwSetMouseButtonCallback(m_window, mouse_button_callback);
-	glfwSetCursorPosCallback(m_window, cursor_position_callback);
-	glfwSetKeyCallback(m_window, key_callback);
+	glfwSetMouseButtonCallback(window, mouse_button_callback);
+	glfwSetCursorPosCallback(window, cursor_position_callback);
+	glfwSetKeyCallback(window, key_callback);
+	glfwSetScrollCallback(window, scroll_wheel_callback);
+	glfwGetWindowSize(window, &m_width, &m_height);
 }
 
 void InputHandler::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
@@ -56,12 +63,22 @@ void InputHandler::cursor_position_callback(GLFWwindow* window, double xpos, dou
 	}
 	ioptr.AddMousePosEvent((float)xpos, (float)ypos);
 
-	int width, height;
-	glfwGetWindowSize(window, &width, &height);
+	glfwGetWindowSize(window, &m_width, &m_height);
 
 	//std::cout << "test" << std::endl;
-	mouseXPos = (originalXPos - (width / 2)) / (width / 16);
-	mouseYPos = -(originalYPos - (height / 2)) / (width / 16);
+	mouseXPos = originalXPos;
+	mouseYPos = originalYPos;
+
+	glm::mat4 invProj = glm::inverse(m_proj);
+
+	float ndcX = (2.0f * (mouseXPos / m_width)) - 1.0f;
+	float ndcY = 1.0f - (2.0f * (mouseYPos / m_height));
+
+	glm::vec4 clipSpaceCoords(ndcX, ndcY, 0.0f, 1.0f);
+	glm::vec4 worldCoords = invProj * clipSpaceCoords;
+
+	mouseXPos = worldCoords.x;
+	mouseYPos = worldCoords.y;
 
 	if ((glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) || (ioptr.WantCaptureMouse && ImGui::IsMouseDragging(0)))
 	{
@@ -91,8 +108,27 @@ void InputHandler::key_callback(GLFWwindow* window, int key, int scancode, int a
 	}
 }
 
-void InputHandler::UpdateInput()
+void InputHandler::scroll_wheel_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
+	float zoomAmount = 0.5f;
+
+	if (yoffset < 0 && (m_zoomLevel + zoomAmount < 2))
+		m_zoomLevel += zoomAmount;
+
+	else if (m_zoomLevel - zoomAmount >= 0.2 && yoffset > 0)
+		m_zoomLevel -= zoomAmount;
+
+	m_zoomUsed = true;
+	
+	std::cout << m_zoomLevel << std::endl;
+}
+
+void InputHandler::UpdateInput(glm::mat4 proj)
+{
+	m_proj = proj;
+
+	if (m_zoomUsed)
+		m_zoomUsed = false;
 
 	if (currentInputEvent == InputEvents::MOUSE_DRAG)
 		return;

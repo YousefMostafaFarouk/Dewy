@@ -30,6 +30,7 @@ Program::Program() :
 	spriteManager.BindTextures();
 	GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 	GLCall(glEnable(GL_BLEND));
+	glfwSwapInterval(1);
 	std::cout << glGetString(GL_VERSION) << std::endl;
 
 	tempEntity = NULL;
@@ -338,7 +339,14 @@ void Program::ResetFrameState()
 	gui.BeginNewFrame();
 	inputHandler.m_inputReceived = false;
 	spriteRenderer.PollEvents();
-	inputHandler.UpdateInput();
+
+	if (inputHandler.m_zoomUsed)
+	{
+		proj = glm::ortho(-8.0f * inputHandler.m_zoomLevel, 8.0f * inputHandler.m_zoomLevel, -4.5f * inputHandler.m_zoomLevel, 4.5f * inputHandler.m_zoomLevel, -1.0f, 1.0f);
+		spriteRenderer.UpdateProjectionMatrix(proj);
+	}
+
+	inputHandler.UpdateInput(proj);
 	verticies.clear();
 }
 

@@ -20,7 +20,6 @@ const int* textureLookUp, const int numberOfTextures, glm::mat4 projectionMatrix
 		{
 			glViewport(0, 0, width, height);
 		});
-
 }
 
 void SpriteRender::DrawSprite(const std::vector<Vertex>& verticies)
@@ -28,6 +27,12 @@ void SpriteRender::DrawSprite(const std::vector<Vertex>& verticies)
 	spriteVertexArray.Bind();
 	spriteVertexBuffer.AddBufferData(verticies.size() * sizeof(Vertex), &verticies[0], verticies.size());
 	GLCall(glDrawArrays(GL_TRIANGLES, 0, spriteVertexBuffer.GetVerticiesCount()));
+}
+
+void SpriteRender::UpdateProjectionMatrix(glm::mat4 projectionMatrix)
+{
+	m_projectionMatrix = projectionMatrix;
+	m_shader.SetUniformMat4f("u_MVP", m_projectionMatrix);
 }
 
 

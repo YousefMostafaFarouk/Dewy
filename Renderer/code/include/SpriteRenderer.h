@@ -23,4 +23,5 @@ public:
 	SpriteRender(unsigned int height, unsigned int width, const std::string& name, const std::string& shaderPath
 	, const int* textureLookUp, const int numberOfTextures, glm::mat4 projectionMatrix);
 	void DrawSprite(const std::vector<Vertex>& verticies);
+	void UpdateProjectionMatrix(glm::mat4 projectionMatrix);
 };
