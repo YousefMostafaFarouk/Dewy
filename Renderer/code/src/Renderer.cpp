@@ -27,8 +27,8 @@ Renderer::Renderer(unsigned int height, unsigned int width, const std::string& n
         std::cout << "not working glfw";
        
 
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 6);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
     /* Create a windowed mode window and its OpenGL context */
@@ -42,7 +42,7 @@ Renderer::Renderer(unsigned int height, unsigned int width, const std::string& n
     glfwMakeContextCurrent(m_window);
 
     //enables vsync
-    glfwSwapInterval(0);
+    glfwSwapInterval(1);
 
     // You have to initalize after creating the GLFW context
     GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));

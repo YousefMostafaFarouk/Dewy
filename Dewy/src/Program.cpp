@@ -30,7 +30,6 @@ Program::Program() :
 	spriteManager.BindTextures();
 	GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
 	GLCall(glEnable(GL_BLEND));
-	glfwSwapInterval(1);
 	std::cout << glGetString(GL_VERSION) << std::endl;
 
 	tempEntity = NULL;

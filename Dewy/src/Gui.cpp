@@ -20,8 +20,7 @@ Gui::Gui(SpriteRender& spriteRenderer)
 
 	// Setup Platform/Renderer backends
 	ImGui_ImplGlfw_InitForOpenGL(spriteRenderer.getWindowPointer(), true);
-	ImGui_ImplOpenGL3_Init();
-
+	ImGui_ImplOpenGL3_Init("#version 330");
 }
 
 void Gui::BeginNewFrame()
