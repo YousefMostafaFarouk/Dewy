@@ -1,6 +1,5 @@
 #include "InputHandler.h"
 #include "iostream"
-#include "imgui_impl_glfw.h"
 
 int InputHandler::m_width = 1280;
 int InputHandler::m_height = 720;
@@ -27,23 +26,13 @@ InputHandler::InputHandler(GLFWwindow* window)
 void InputHandler::mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
 	m_inputReceived = true;
-	ImGuiIO& ioptr = ImGui::GetIO();
 
-	ioptr.AddMouseButtonEvent(button, action == GLFW_PRESS);
-
-	if (!ioptr.WantCaptureMouse)
+	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
-		//std::cout << "here\n";
-		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-		{
-			currentInputEvent = InputEvents::LEFT_MOUSE_CLICKED;
-			std::cout << mouseXPos << " " << mouseYPos << std::endl;
-		}
-		if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
-			currentInputEvent = InputEvents::MOUSE_RELEASE;
+		currentInputEvent = InputEvents::LEFT_MOUSE_CLICKED;
+		std::cout << mouseXPos << " " << mouseYPos << std::endl;
 	}
-
-	else if (button == GLFW_MOUSE_BUTTON_LEFT &&  action == GLFW_RELEASE)
+	else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
 		currentInputEvent = InputEvents::MOUSE_RELEASE;
 }
 
@@ -52,19 +41,6 @@ void InputHandler::cursor_position_callback(GLFWwindow* window, double xpos, dou
 	// Location of cursor before modification by imGui
 	double originalXPos = xpos;
 	double originalYPos = ypos;
-
-	ImGuiIO& ioptr = ImGui::GetIO();
-	if (ioptr.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-	{
-		int window_x, window_y;
-		glfwGetWindowPos(window, &window_x, &window_y);
-		xpos += window_x;
-		ypos += window_y;
-	}
-	ioptr.AddMousePosEvent((float)xpos, (float)ypos);
-
-	glfwGetWindowSize(window, &m_width, &m_height);
-
 	//std::cout << "test" << std::endl;
 	mouseXPos = originalXPos;
 	mouseYPos = originalYPos;
@@ -80,9 +56,8 @@ void InputHandler::cursor_position_callback(GLFWwindow* window, double xpos, dou
 	mouseXPos = worldCoords.x;
 	mouseYPos = worldCoords.y;
 
-	if ((glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) || (ioptr.WantCaptureMouse && ImGui::IsMouseDragging(0)))
+	if ((glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS))
 	{
-		//std::cout << "dragging" << std::endl;
 		m_inputReceived = true;
 		currentInputEvent = InputEvents::MOUSE_DRAG;
 	}

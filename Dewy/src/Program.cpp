@@ -333,11 +333,11 @@ void Program::DeleteEntity(Entity* entity)
 void Program::ResetFrameState()
 {
 	holdingComponent = false;
+	inputHandler.m_inputReceived = false;
 	spriteRenderer.Clear();
 
-	gui.BeginNewFrame();
-	inputHandler.m_inputReceived = false;
 	spriteRenderer.PollEvents();
+	gui.BeginNewFrame();
 
 	if (inputHandler.m_zoomUsed)
 	{
@@ -384,11 +384,10 @@ void Program::HandleMenuSelectedEntityPlacement()
 	{
 		delete tempEntity;
 		tempEntity = NULL;
-
 		entities.pop_back();
 	}
 
-	else if (tempEntity != NULL && inputHandler.currentInputEvent == InputEvents::MOUSE_RELEASE && !ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem | ImGuiHoveredFlags_AnyWindow))
+	else if (tempEntity != NULL && inputHandler.currentInputEvent == InputEvents::MOUSE_RELEASE)
 		tempEntity = NULL;
 }
 
