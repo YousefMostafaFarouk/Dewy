@@ -333,7 +333,6 @@ void Program::DeleteEntity(Entity* entity)
 void Program::ResetFrameState()
 {
 	holdingComponent = false;
-	inputHandler.m_inputReceived = false;
 	spriteRenderer.Clear();
 
 	spriteRenderer.PollEvents();

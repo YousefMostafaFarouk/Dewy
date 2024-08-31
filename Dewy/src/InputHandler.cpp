@@ -56,7 +56,7 @@ void InputHandler::cursor_position_callback(GLFWwindow* window, double xpos, dou
 	mouseXPos = worldCoords.x;
 	mouseYPos = worldCoords.y;
 
-	if ((glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS))
+	if ((glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) && !m_inputReceived)
 	{
 		m_inputReceived = true;
 		currentInputEvent = InputEvents::MOUSE_DRAG;
@@ -112,4 +112,6 @@ void InputHandler::UpdateInput(glm::mat4 proj)
 		currentInputEvent = InputEvents::NONE;
 
 	previousInputEvent = currentInputEvent;
+	m_inputReceived = false;
+
 }
