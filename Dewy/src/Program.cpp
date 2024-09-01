@@ -338,11 +338,41 @@ void Program::ResetFrameState()
 	spriteRenderer.PollEvents();
 	gui.BeginNewFrame();
 
-	if (inputHandler.m_zoomUsed)
+	glm::mat4 zoomMatrix = glm::mat4(1.0f);
+	if (inputHandler.m_zoomUsed && (inputHandler.m_prevZoomLevel - inputHandler.m_zoomLevel != 0))
 	{
-		proj = glm::ortho(-8.0f * inputHandler.m_zoomLevel, 8.0f * inputHandler.m_zoomLevel, -4.5f * inputHandler.m_zoomLevel, 4.5f * inputHandler.m_zoomLevel, -1.0f, 1.0f);
-		spriteRenderer.UpdateProjectionMatrix(proj);
+		float aspectRatio = 16.0f / 9.0f; // Assuming 16:9 aspect ratio
+		float newWidth = 16.0f * inputHandler.m_zoomLevel;
+		float newHeight = 9.0f * inputHandler.m_zoomLevel;
+
+		// Store the mouse position before updating the projection
+		glm::vec2 oldMousePos(inputHandler.mouseXPos, inputHandler.mouseYPos);
+
+		// Calculate new projection matrix
+		proj = glm::ortho(-newWidth / 2.0f, newWidth / 2.0f, -newHeight / 2.0f, newHeight / 2.0f, -1.0f, 1.0f);
+
+		// Calculate the offset to center the zoom around the cursor
+		glm::vec2 zoomCenter = oldMousePos;
+		glm::vec2 newCenter(0.0f, 0.0f); // Center of the new view
+
+		// Translate the projection to zoom around the cursor
+		if (inputHandler.m_prevZoomLevel - inputHandler.m_zoomLevel > 0)
+		{
+			prevZoomXCenter = zoomCenter.x;
+			prevZoomYCenter = zoomCenter.y;
+			glm::mat4 translation = glm::translate(glm::mat4(1.0f), glm::vec3(newCenter - zoomCenter, 0.0f));
+			proj = proj * translation;
+		}
+		else
+		{
+			zoomCenter.x = prevZoomXCenter;
+			zoomCenter.y = prevZoomYCenter;
+			glm::mat4 translation = glm::translate(glm::mat4(1.0f), glm::vec3(newCenter - zoomCenter, 0.0f));
+			proj = proj * translation;
+		}
 	}
+
+	spriteRenderer.UpdateProjectionMatrix(proj);
 
 	inputHandler.UpdateInput(proj);
 	verticies.clear();
@@ -399,12 +429,11 @@ void Program::HandleEntitySelection()
 		mouseStartYPos = inputHandler.mouseYPos;
 		selecting = true;
 	}
-	else if (inputHandler.currentInputEvent == InputEvents::LEFT_MOUSE_CLICKED)
+	else if (inputHandler.currentInputEvent == InputEvents::LEFT_MOUSE_CLICKED && !IsEntityInSelectedEntites(collisionManager.clickedEntity))
 	{
 		selecting = false;
 		selectedEntities.clear();
 	}
-
 
 	if (inputHandler.currentInputEvent == InputEvents::MOUSE_RELEASE && selecting && !collisionManager.IsEntityBeingDragged(inputHandler.currentInputEvent))
 		AddEntitiesToSelection();
@@ -430,9 +459,33 @@ void Program::HandleEntitySelection()
 
 void Program::HandleUserInteractionWithEntity()
 {
-	if (collisionManager.IsEntityBeingDragged(inputHandler.currentInputEvent))
+	if (collisionManager.IsEntityBeingDragged(inputHandler.currentInputEvent) && selectedEntities.size() > 0
+		&& IsEntityInSelectedEntites(collisionManager.clickedEntity))
+	{
+		float centerX = 0.0f;
+		float centerY = 0.0f;
+
+		for (int i = 0; i < selectedEntities.size(); ++i)
+		{
+			centerX += (selectedEntities[i]->sprite.verticies[0].position[0] + selectedEntities[i]->sprite.verticies[2].position[0]) / 2;
+			centerY += (selectedEntities[i]->sprite.verticies[0].position[1] + selectedEntities[i]->sprite.verticies[2].position[1]) / 2;
+		}
+
+		centerX /= selectedEntities.size();
+		centerY /= selectedEntities.size();
+
+		float displacementX = inputHandler.mouseXPos - centerX;
+		float displacementY = inputHandler.mouseYPos - centerY;
+
+		for (int i = 0; i < selectedEntities.size(); ++i)
+		{
+			selectedEntities[i]->MoveAlongVector(displacementX, displacementY);
+		}
+	}
+	else if (collisionManager.IsEntityBeingDragged(inputHandler.currentInputEvent))
+	{
 		collisionManager.clickedEntity->MoveToPoint(inputHandler.mouseXPos, inputHandler.mouseYPos);
-	
+	}
 	else
 	{
 		for (int i = 0; i < entities.size(); ++i)
@@ -455,6 +508,11 @@ void Program::UpdateEntitiesStates()
 		entities[i]->Reset();
 	for (int i = 0; i < entities.size(); ++i)
 		entities[i]->Update();
+}
+
+bool Program::IsEntityInSelectedEntites(Entity* entity)
+{
+	return std::find(selectedEntities.begin(), selectedEntities.end(), entity) != selectedEntities.end();
 }
 
 void Program::RenderFrame()

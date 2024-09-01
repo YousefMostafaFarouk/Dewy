@@ -26,6 +26,7 @@ public:
 	static int m_width;
 	static int m_height;
 	static float m_zoomLevel;
+	static float m_prevZoomLevel;
 	static glm::mat4 m_proj;
 
 public:

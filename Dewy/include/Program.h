@@ -32,6 +32,7 @@ private:
 
     bool holdingComponent = false;
     float mouseStartXPos = 0.0f, mouseStartYPos = 0.0f, mouseEndXPos = 0.0f, mouseEndYPos = 0.0f;
+    float prevZoomXCenter = 0.0f, prevZoomYCenter = 0.0f;
     bool selecting = false;
 
     void AddMenuSelectedEntity();
@@ -49,6 +50,7 @@ private:
     void HandleEntitySelection();
     void HandleUserInteractionWithEntity();
     void UpdateEntitiesStates();
+    bool IsEntityInSelectedEntites(Entity* entity);
     void RenderFrame();
     Entity* CreateEntity();
 };

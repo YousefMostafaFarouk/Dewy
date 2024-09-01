@@ -6,6 +6,7 @@ int InputHandler::m_height = 720;
 double InputHandler::mouseXPos = 0;
 double InputHandler::mouseYPos = 0;
 float InputHandler::m_zoomLevel = 1;
+float InputHandler::m_prevZoomLevel = 1;
 glm::mat4  InputHandler::m_proj;
 
 InputEvents InputHandler::currentInputEvent = InputEvents::NONE;
@@ -41,12 +42,13 @@ void InputHandler::cursor_position_callback(GLFWwindow* window, double xpos, dou
 	// Location of cursor before modification by imGui
 	double originalXPos = xpos;
 	double originalYPos = ypos;
-	//std::cout << "test" << std::endl;
+
 	mouseXPos = originalXPos;
 	mouseYPos = originalYPos;
 
 	glm::mat4 invProj = glm::inverse(m_proj);
 
+	glfwGetWindowSize(window, &m_width, &m_height);
 	float ndcX = (2.0f * (mouseXPos / m_width)) - 1.0f;
 	float ndcY = 1.0f - (2.0f * (mouseYPos / m_height));
 
@@ -86,6 +88,7 @@ void InputHandler::key_callback(GLFWwindow* window, int key, int scancode, int a
 void InputHandler::scroll_wheel_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
 	float zoomAmount = 0.5f;
+	m_prevZoomLevel = m_zoomLevel;
 
 	if (yoffset < 0 && (m_zoomLevel + zoomAmount < 2))
 		m_zoomLevel += zoomAmount;
