@@ -11,7 +11,7 @@ bool CollisionManager::AABBCollision(float firstLeftXPos, float firstRightXPos, 
 	return collidedHorizontally && collidedVertically;
 }
 
-bool CollisionManager::IsSpriteClicked(Sprite& sprite, float mouseXPos, float mouseYPos, InputEvents currentInputEvent)
+bool CollisionManager::IsSpriteClicked(Sprite& m_sprite, float mouseXPos, float mouseYPos, InputEvents currentInputEvent)
 {
 	if(currentInputEvent != InputEvents::LEFT_MOUSE_CLICKED)
 		return false;
@@ -20,8 +20,8 @@ bool CollisionManager::IsSpriteClicked(Sprite& sprite, float mouseXPos, float mo
 	float mouseHeight = 0.1f;
 
 	bool result = AABBCollision(mouseXPos - mouseWidth, mouseXPos + mouseWidth, mouseYPos - mouseHeight, mouseYPos + mouseHeight,
-	sprite.verticies[0].position[0], sprite.verticies[2].position[0],
-	sprite.verticies[0].position[1], sprite.verticies[2].position[1]);
+	m_sprite.verticies[0].position[0], m_sprite.verticies[2].position[0],
+	m_sprite.verticies[0].position[1], m_sprite.verticies[2].position[1]);
 
 	return result;
 }
@@ -66,11 +66,11 @@ bool CollisionManager::AreSpritesCollided(Sprite& sprite1, Sprite& sprite2)
 
 bool CollisionManager::IsEntityBeingDragged(InputEvents currentInputEvent)
 {
-	if ((currentInputEvent == InputEvents::MOUSE_DRAG ) && clickedEntity != NULL)
+	if ((currentInputEvent == InputEvents::MOUSE_DRAG ) && m_clickedEntity != NULL)
 		return true;
 
 	if(currentInputEvent == InputEvents::MOUSE_RELEASE)
-		clickedEntity = NULL;
+		m_clickedEntity = NULL;
 
 	return false;
 }

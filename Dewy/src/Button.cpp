@@ -3,26 +3,26 @@
 
 Button::Button(const Sprite& buttonSprite, const Sprite& componentSprite, const Sprite& transparentComponentSprite, int onTextureId, int offTextureId) : Entity(buttonSprite), m_offTextureId(offTextureId), m_onTextureId(onTextureId)
 {
-	clickable = true;
+	m_clickable = true;
 	// The first component is pretty much the hitbox for the button
-	components.push_back(new ConnectionComponent(transparentComponentSprite, this, 0.5 * sprite.m_size, -0.5f * sprite.m_size, true));
+	m_components.push_back(new ConnectionComponent(transparentComponentSprite, this, 0.5 * m_sprite.m_size, -0.5f * m_sprite.m_size, true));
 
-	components.push_back(new ConnectionComponent(componentSprite, this, 1.0f * sprite.m_size, -0.5f * sprite.m_size, true));
+	m_components.push_back(new ConnectionComponent(componentSprite, this, 1.0f * m_sprite.m_size, -0.5f * m_sprite.m_size, true));
 }
 
 Entity* Button::Copy()
 {
-	Entity* copiedButton = new Button(sprite, components[1]->sprite, components[0]->sprite, m_onTextureId, m_offTextureId);
-	copiedButton->state = state;
+	Entity* copiedButton = new Button(m_sprite, m_components[1]->m_sprite, m_components[0]->m_sprite, m_onTextureId, m_offTextureId);
+	copiedButton->m_state = m_state;
 	return copiedButton;
 }
 
 
 void Button::MoveToPoint(float xPos, float yPos)
 {
-	sprite.MoveToPoint(xPos, yPos);
+	m_sprite.MoveToPoint(xPos, yPos);
 
-	for (auto& component : components)
+	for (auto& component : m_components)
 	{
 		component->MoveToPoint(0, 0);
 	}
@@ -30,9 +30,9 @@ void Button::MoveToPoint(float xPos, float yPos)
 
 void Button::MoveAlongVector(float xPos, float yPos)
 {
-	sprite.MoveAlongVector(xPos, yPos);
+	m_sprite.MoveAlongVector(xPos, yPos);
 
-	for (auto& component : components)
+	for (auto& component : m_components)
 	{
 		component->MoveToPoint(0, 0);
 	}
@@ -40,14 +40,14 @@ void Button::MoveAlongVector(float xPos, float yPos)
 
 bool Button::Update()
 {
-	if (updated)
-		return state;
+	if (m_updated)
+		return m_state;
 
-	if (state == 0)
-		sprite.UpdateTextureID(m_offTextureId);
+	if (m_state == 0)
+		m_sprite.UpdateTextureID(m_offTextureId);
 	else
-		sprite.UpdateTextureID(m_onTextureId);
+		m_sprite.UpdateTextureID(m_onTextureId);
 
-	updated = true;
-	return state;
+	m_updated = true;
+	return m_state;
 }

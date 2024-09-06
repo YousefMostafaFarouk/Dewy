@@ -68,12 +68,26 @@ Selectable Gui::DrawMenu(SpriteManager& spriteManager, std::map<std::string, std
 		ImGui::EndGroup();
 		ImGui::SameLine();
 	}
+	ImGui::PopStyleColor(3);
 
-	ImGui::PopStyleColor();
-	ImGui::PopStyleColor();
-	ImGui::PopStyleColor();
+	// Add Help Button
+	if (ImGui::Button("Help"))
+	{
+		ImGui::OpenPopup("HelpPopup");
+	}
+
+	if (ImGui::BeginPopup("HelpPopup"))
+	{
+		ImGui::Text("Instructions:");
+		ImGui::BulletText("To select an element click and drag your mouse over them.");
+		ImGui::BulletText("To copy selected elements press Ctrl + C.");
+		ImGui::BulletText("To paste selected elements press Ctrl + V to paste the elements to the mouse location.");
+		ImGui::BulletText("To delete selected elements press Backspace.");
+		ImGui::BulletText("You can drag selected elements by holding left click on any of them and moving your mouse.");
+		ImGui::BulletText("If you click on an input node it will disconnect it from any output nodes that it is connected to.");
+		ImGui::EndPopup();
+	}
 	ImGui::End();
 
 	return selected;
 }
-

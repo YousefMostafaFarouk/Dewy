@@ -16,8 +16,8 @@ enum class InputEvents
 class InputHandler
 {
 public:
-	static InputEvents currentInputEvent;
-	static InputEvents previousInputEvent;
+	static InputEvents m_currentInputEvent;
+	static InputEvents m_previousInputEvent;
 	static bool isLeftMouseButtonHeld;
 	static bool m_inputReceived;
 	static bool m_zoomUsed;

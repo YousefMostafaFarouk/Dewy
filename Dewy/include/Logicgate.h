@@ -12,8 +12,8 @@ public:
 	LogicGatesTypes m_type;
 
 public:
-	LogicGate(LogicGatesTypes type, const Sprite& sprite, const Sprite& componentSprite);
-	LogicGate(LogicGatesTypes type, const Sprite& sprite);
+	LogicGate(LogicGatesTypes type, const Sprite& m_sprite, const Sprite& componentSprite);
+	LogicGate(LogicGatesTypes type, const Sprite& m_sprite);
 	virtual Entity* OnClick(Entity* entity, float xPos, float yPos) override;
 	virtual void MoveToPoint(float xPos, float yPos) override;
 	virtual void MoveAlongVector(float xPos, float yPos) override;

@@ -1,8 +1,8 @@
 #include "logicgate.h"
 #include <iostream>
 
-LogicGate::LogicGate(LogicGatesTypes type, const Sprite& sprite, const Sprite& componentSprite)
-:Entity(sprite), m_type(type)
+LogicGate::LogicGate(LogicGatesTypes type, const Sprite& m_sprite, const Sprite& componentSprite)
+:Entity(m_sprite), m_type(type)
 {
 	switch (type)
 	{
@@ -10,26 +10,26 @@ LogicGate::LogicGate(LogicGatesTypes type, const Sprite& sprite, const Sprite& c
 		break;
 
 	case LogicGatesTypes::NOT:
-		components.push_back(new ConnectionComponent(componentSprite, this, 0.125f * sprite.m_size, -0.5f * sprite.m_size));
-		components.push_back(new ConnectionComponent(componentSprite, this, 0.9f * sprite.m_size, -0.5f * sprite.m_size, true));
+		m_components.push_back(new ConnectionComponent(componentSprite, this, 0.125f * m_sprite.m_size, -0.5f * m_sprite.m_size));
+		m_components.push_back(new ConnectionComponent(componentSprite, this, 0.9f * m_sprite.m_size, -0.5f * m_sprite.m_size, true));
 		break;
 
 	case LogicGatesTypes::OR:
-		components.push_back(new ConnectionComponent(componentSprite, this, 0.125f * sprite.m_size, -0.30f * sprite.m_size));
-		components.push_back(new ConnectionComponent(componentSprite, this, 0.125f * sprite.m_size, -0.70f * sprite.m_size));
-		components.push_back(new ConnectionComponent(componentSprite, this, 0.9f * sprite.m_size, -0.5f * sprite.m_size, true));
+		m_components.push_back(new ConnectionComponent(componentSprite, this, 0.125f * m_sprite.m_size, -0.30f * m_sprite.m_size));
+		m_components.push_back(new ConnectionComponent(componentSprite, this, 0.125f * m_sprite.m_size, -0.70f * m_sprite.m_size));
+		m_components.push_back(new ConnectionComponent(componentSprite, this, 0.9f * m_sprite.m_size, -0.5f * m_sprite.m_size, true));
 		break;
 
 	case LogicGatesTypes::AND:
-		components.push_back(new ConnectionComponent(componentSprite, this, 0.125f * sprite.m_size, -0.30f * sprite.m_size));
-		components.push_back(new ConnectionComponent(componentSprite, this, 0.125f * sprite.m_size, -0.70f * sprite.m_size));
-		components.push_back(new ConnectionComponent(componentSprite, this, 0.9f * sprite.m_size, -0.5f * sprite.m_size, true));
+		m_components.push_back(new ConnectionComponent(componentSprite, this, 0.125f * m_sprite.m_size, -0.30f * m_sprite.m_size));
+		m_components.push_back(new ConnectionComponent(componentSprite, this, 0.125f * m_sprite.m_size, -0.70f * m_sprite.m_size));
+		m_components.push_back(new ConnectionComponent(componentSprite, this, 0.9f * m_sprite.m_size, -0.5f * m_sprite.m_size, true));
 		break;
 
 	case LogicGatesTypes::XOR:
-		components.push_back(new ConnectionComponent(componentSprite, this, 0.125f * sprite.m_size, -0.30f * sprite.m_size));
-		components.push_back(new ConnectionComponent(componentSprite, this, 0.125f * sprite.m_size, -0.70f * sprite.m_size));
-		components.push_back(new ConnectionComponent(componentSprite, this, 0.9f * sprite.m_size, -0.5f * sprite.m_size, true));
+		m_components.push_back(new ConnectionComponent(componentSprite, this, 0.125f * m_sprite.m_size, -0.30f * m_sprite.m_size));
+		m_components.push_back(new ConnectionComponent(componentSprite, this, 0.125f * m_sprite.m_size, -0.70f * m_sprite.m_size));
+		m_components.push_back(new ConnectionComponent(componentSprite, this, 0.9f * m_sprite.m_size, -0.5f * m_sprite.m_size, true));
 		break;
 
 	default:
@@ -37,8 +37,8 @@ LogicGate::LogicGate(LogicGatesTypes type, const Sprite& sprite, const Sprite& c
 	}
 }
 
-LogicGate::LogicGate(LogicGatesTypes type, const Sprite& sprite)
-	:Entity(sprite), m_type(type)
+LogicGate::LogicGate(LogicGatesTypes type, const Sprite& m_sprite)
+	:Entity(m_sprite), m_type(type)
 {}
 
 Entity* LogicGate::OnClick(Entity * entity, float xPos, float yPos)
@@ -48,9 +48,9 @@ Entity* LogicGate::OnClick(Entity * entity, float xPos, float yPos)
 
 void LogicGate::MoveToPoint(float xPos, float yPos)
 {
-	sprite.MoveToPoint(xPos, yPos);
+	m_sprite.MoveToPoint(xPos, yPos);
 	
-	for (auto& component : components)
+	for (auto& component : m_components)
 	{
 		component->MoveToPoint(0, 0);
 	}
@@ -58,9 +58,9 @@ void LogicGate::MoveToPoint(float xPos, float yPos)
 
 void LogicGate::MoveAlongVector(float xPos, float yPos)
 {
-	sprite.MoveAlongVector(xPos, yPos);
+	m_sprite.MoveAlongVector(xPos, yPos);
 
-	for (auto& component : components)
+	for (auto& component : m_components)
 	{
 		component->MoveToPoint(0, 0);
 	}
@@ -68,8 +68,8 @@ void LogicGate::MoveAlongVector(float xPos, float yPos)
 
 bool LogicGate::Update()
 {
-	if (updated)
-		return state;
+	if (m_updated)
+		return m_state;
 
 	bool result = false;
 
@@ -90,80 +90,80 @@ bool LogicGate::Update()
 		result =XorUpdate();
 	}
 
-	updated = true;
+	m_updated = true;
 	return result;
 }
 
 Entity* LogicGate::Copy()
 {
-	Entity* copiedLogicGate = new LogicGate(m_type, sprite, components[0]->sprite);
+	Entity* copiedLogicGate = new LogicGate(m_type, m_sprite, m_components[0]->m_sprite);
 	return copiedLogicGate;
 }
 
 bool LogicGate::AndUpdate()
 {
 	bool result = true;
-	for (const ConnectionComponent* component : components)
+	for (const ConnectionComponent* component : m_components)
 	{
-		if (component->outPutComponenet)
+		if (component->m_outPutComponenet)
 			continue;
 
-		if (component->connectedTo == NULL)
+		if (component->m_connectedTo == NULL)
 			result &= false;
 		else
-			result &= component->connectedTo->parentEntity->Update();
+			result &= component->m_connectedTo->m_parentEntity->Update();
 	}
-	state = result;
-	return state;
+	m_state = result;
+	return m_state;
 }
 
 bool LogicGate::OrUpdate()
 {
 	bool result = false;
-	for (const ConnectionComponent* component : components) 
+	for (const ConnectionComponent* component : m_components) 
 	{
-		if (component->outPutComponenet)
+		if (component->m_outPutComponenet)
 			continue;
 
-		if (component->connectedTo == NULL)
+		if (component->m_connectedTo == NULL)
 			result |= false;
 
 		else
-			result |= component->connectedTo->parentEntity->Update();
+			result |= component->m_connectedTo->m_parentEntity->Update();
 	}
-	state = result;
+	m_state = result;
 	//std::cout << result << std::endl;
-	return state;
+	return m_state;
 }
 
 bool LogicGate::XorUpdate()
 {
 
 	bool result = false;
-	for (const ConnectionComponent* component : components)
+	for (const ConnectionComponent* component : m_components)
 	{
-		if (component->outPutComponenet)
+		if (component->m_outPutComponenet)
 			continue;
 
-		if (component->connectedTo == NULL)
+		if (component->m_connectedTo == NULL)
 			result ^= false;
 		else
-			result ^= component->connectedTo->parentEntity->Update();
+			result ^= component->m_connectedTo->m_parentEntity->Update();
 	}
-	state = result;
-	return state;
+	m_state = result;
+	return m_state;
 }
 
 bool LogicGate::NotUpdate()
 {
-	for (const ConnectionComponent* component : components)
+	for (const ConnectionComponent* component : m_components)
 	{
-		if (component->outPutComponenet)
+		if (component->m_outPutComponenet)
 			continue;
-		if (component->connectedTo == NULL)
-			state = !false;
+		if (component->m_connectedTo == NULL)
+			m_state = !false;
 		else
-			state = !component->connectedTo->parentEntity->Update();
+			m_state = !component->m_connectedTo->m_parentEntity->Update();
 	}
-	return state;
+	return m_state;
 }

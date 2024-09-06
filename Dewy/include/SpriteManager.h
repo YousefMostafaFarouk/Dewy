@@ -8,8 +8,8 @@
 class SpriteManager
 {
 public:
-	int* textureSlots = NULL;
-	int numberOfTextures = 0;
+	int* m_textureSlots = NULL;
+	int m_numberOfTextures = 0;
 
 public:
 	SpriteManager(std::vector<std::string> textureLocations);

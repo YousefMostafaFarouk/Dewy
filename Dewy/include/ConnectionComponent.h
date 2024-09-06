@@ -3,17 +3,17 @@
 class ConnectionComponent
 {
 public:
-	Sprite sprite;
-	ConnectionComponent* connectedTo{ NULL };
-	Entity* parentEntity{ NULL };
+	Sprite m_sprite;
+	ConnectionComponent* m_connectedTo{ NULL };
+	Entity* m_parentEntity{ NULL };
 
-	float xOffSet;
-	float yOffSet;
+	float m_xOffSet;
+	float m_yOffSet;
 
-	bool outPutComponenet{ false };
+	bool m_outPutComponenet{ false };
 
 public:
-	ConnectionComponent(const Sprite& componentSprite, Entity* parent, float xOffSet, float yOffset, bool outputComp=false);
+	ConnectionComponent(const Sprite& componentSprite, Entity* parent, float m_xOffSet, float yOffset, bool outputComp=false);
 	void MoveToPoint(float xPos, float yPos);
 };
 

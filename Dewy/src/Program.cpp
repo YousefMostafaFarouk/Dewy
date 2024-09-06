@@ -23,7 +23,7 @@ Program::Program() :
 		}),
 	proj(glm::ortho(-8.0f, 8.0f, -4.5f, 4.5f, -1.0f, 1.0f)),
 	spriteManager(nameTextureLocationMapping),
-	spriteRenderer(720, 1280, "LogicGateSimulator", "../Renderer/res/shaders/basic.shader", spriteManager.textureSlots, spriteManager.numberOfTextures, proj),
+	spriteRenderer(720, 1280, "LogicGateSimulator", "../Renderer/res/shaders/basic.shader", spriteManager.m_textureSlots, spriteManager.m_numberOfTextures, proj),
 	gui(spriteRenderer),
 	inputHandler(spriteRenderer.getWindowPointer())
 {
@@ -105,22 +105,22 @@ void Program::CopySelection()
 
 	for (auto& entityPair : copied)
 	{
-		for (int i = 0; i < entityPair.first->components.size(); ++i)
+		for (int i = 0; i < entityPair.first->m_components.size(); ++i)
 		{
-			if (entityPair.first->components[i]->outPutComponenet || entityPair.first->components[i]->connectedTo == NULL)
+			if (entityPair.first->m_components[i]->m_outPutComponenet || entityPair.first->m_components[i]->m_connectedTo == NULL)
 				continue;
 
-			if (copied[entityPair.first->components[i]->connectedTo->parentEntity])
+			if (copied[entityPair.first->m_components[i]->m_connectedTo->m_parentEntity])
 			{
-				Entity* referenceEntity = copied[entityPair.first->components[i]->connectedTo->parentEntity];
+				Entity* referenceEntity = copied[entityPair.first->m_components[i]->m_connectedTo->m_parentEntity];
 				ConnectionComponent* outputComponent = NULL;
-				for (int j = 0; j < referenceEntity->components.size(); ++j)
+				for (int j = 0; j < referenceEntity->m_components.size(); ++j)
 				{
-					if (referenceEntity->components[j]->outPutComponenet)
-						outputComponent = referenceEntity->components[j];
+					if (referenceEntity->m_components[j]->m_outPutComponenet)
+						outputComponent = referenceEntity->m_components[j];
 				}
-				entityPair.second->components[i]->connectedTo = outputComponent;
-				entityPair.second->components[i]->connectedTo->connectedTo = entityPair.second->components[i];
+				entityPair.second->m_components[i]->m_connectedTo = outputComponent;
+				entityPair.second->m_components[i]->m_connectedTo->m_connectedTo = entityPair.second->m_components[i];
 			}
 		}
 	}
@@ -133,8 +133,8 @@ void Program::PasteEntities()
 
 	for (int i = 0; i < copiedEntities.size(); ++i)
 	{
-		centerX += (copiedEntities[i]->sprite.verticies[0].position[0] + copiedEntities[i]->sprite.verticies[2].position[0]) / 2;
-		centerY += (copiedEntities[i]->sprite.verticies[0].position[1] + copiedEntities[i]->sprite.verticies[2].position[1]) / 2;
+		centerX += (copiedEntities[i]->m_sprite.verticies[0].position[0] + copiedEntities[i]->m_sprite.verticies[2].position[0]) / 2;
+		centerY += (copiedEntities[i]->m_sprite.verticies[0].position[1] + copiedEntities[i]->m_sprite.verticies[2].position[1]) / 2;
 	}
 
 	centerX /= copiedEntities.size();
@@ -166,12 +166,12 @@ void Program::AddEntitiesToSelection()
 
 	for (int j = 0; j < 6; ++j)
 	{
-		verticies.push_back(selectionBox.sprite.verticies[j]);
+		verticies.push_back(selectionBox.m_sprite.verticies[j]);
 	}
 
 	for (int i = 0; i < entities.size(); ++i)
 	{
-		if (collisionManager.AreSpritesCollided(selectionBox.sprite, entities[i]->sprite))
+		if (collisionManager.AreSpritesCollided(selectionBox.m_sprite, entities[i]->m_sprite))
 		{
 			selectedEntities.push_back(entities[i]);
 			AddHighlightBoxToEntity(entities[i]);
@@ -184,21 +184,21 @@ void Program::AttachClickedComponent(int i)
 {
 	bool move = true;
 
-	for (ConnectionComponent* component : entities[i]->components)
+	for (ConnectionComponent* component : entities[i]->m_components)
 	{
-		if (collisionManager.IsSpriteClicked(component->sprite, inputHandler.mouseXPos, inputHandler.mouseYPos, inputHandler.currentInputEvent))
+		if (collisionManager.IsSpriteClicked(component->m_sprite, inputHandler.mouseXPos, inputHandler.mouseYPos, inputHandler.m_currentInputEvent))
 		{
 			move = false;
 			if (connectionComponent == NULL)
 			{
 				std::cout << "pressed";
 				bool output = false;
-				if (component->connectedTo != NULL && !component->outPutComponenet)
+				if (component->m_connectedTo != NULL && !component->m_outPutComponenet)
 				{
-					component->connectedTo->connectedTo = NULL;
+					component->m_connectedTo->m_connectedTo = NULL;
 					output = true;
 				}
-				component->connectedTo = NULL;
+				component->m_connectedTo = NULL;
 
 				if (!output)
 				{
@@ -208,14 +208,14 @@ void Program::AttachClickedComponent(int i)
 				}
 			}
 
-			else if (component->parentEntity != connectionComponent->parentEntity && (connectionComponent->outPutComponenet && !component->outPutComponenet || !connectionComponent->outPutComponenet && component->outPutComponenet))
+			else if (component->m_parentEntity != connectionComponent->m_parentEntity && (connectionComponent->m_outPutComponenet && !component->m_outPutComponenet || !connectionComponent->m_outPutComponenet && component->m_outPutComponenet))
 			{
-				if (component->connectedTo != NULL && component->connectedTo->outPutComponenet)
-					component->connectedTo->connectedTo = NULL;
+				if (component->m_connectedTo != NULL && component->m_connectedTo->m_outPutComponenet)
+					component->m_connectedTo->m_connectedTo = NULL;
 
-				component->connectedTo = connectionComponent;
-				connectionComponent->connectedTo = component;
-				std::cout << "added to" << (int)((LogicGate*)component->parentEntity)->m_type << std::endl;
+				component->m_connectedTo = connectionComponent;
+				connectionComponent->m_connectedTo = component;
+				std::cout << "added to" << (int)((LogicGate*)component->m_parentEntity)->m_type << std::endl;
 				connectionComponent = NULL;				
 			}
 			else
@@ -226,18 +226,18 @@ void Program::AttachClickedComponent(int i)
 		}
 	}
 
-	if (entities[i]->clickable)
+	if (entities[i]->m_clickable)
 	{
-		if (entities[i]->components[0] == connectionComponent)
+		if (entities[i]->m_components[0] == connectionComponent)
 		{
 			connectionComponent = NULL;
-			entities[i]->state = !entities[i]->state;
+			entities[i]->m_state = !entities[i]->m_state;
 			holdingComponent = false;
 		}
 	}
 
 	if (move)
-		collisionManager.clickedEntity = entities[i];
+		collisionManager.m_clickedEntity = entities[i];
 	
 }
 
@@ -247,10 +247,10 @@ void Program::AddSpritesToVertexBuffer()
 	if (connectionComponent != NULL)
 	{
 		float compenent1XCenter =
-			(connectionComponent->sprite.verticies[0].position[0] + connectionComponent->sprite.verticies[1].position[0]) / 2;
+			(connectionComponent->m_sprite.verticies[0].position[0] + connectionComponent->m_sprite.verticies[1].position[0]) / 2;
 
 		float compenent1YCenter =
-			(connectionComponent->sprite.verticies[0].position[1] + connectionComponent->sprite.verticies[1].position[1]) / 2 + 0.05f;
+			(connectionComponent->m_sprite.verticies[0].position[1] + connectionComponent->m_sprite.verticies[1].position[1]) / 2 + 0.05f;
 
 		Sprite blackLine = spriteManager.CreateSprite(nameTextureLocationMapping["linePath"], compenent1XCenter, compenent1YCenter, inputHandler.mouseXPos, inputHandler.mouseYPos, 0.1f);
 
@@ -262,21 +262,21 @@ void Program::AddSpritesToVertexBuffer()
 	// This was done in a separate loop so that they are drawn beneath the components and entities
 	for (int i = 0; i < entities.size(); ++i)
 	{
-		for (const ConnectionComponent* connectionComponent : entities[i]->components)
+		for (const ConnectionComponent* connectionComponent : entities[i]->m_components)
 		{
-			if (connectionComponent->connectedTo != NULL)
+			if (connectionComponent->m_connectedTo != NULL)
 			{
 
 				float compenent1XCenter =
-					(connectionComponent->sprite.verticies[0].position[0] + connectionComponent->sprite.verticies[1].position[0]) / 2;
+					(connectionComponent->m_sprite.verticies[0].position[0] + connectionComponent->m_sprite.verticies[1].position[0]) / 2;
 
 				float compenent1YCenter =
-					(connectionComponent->sprite.verticies[0].position[1] + connectionComponent->sprite.verticies[1].position[1]) / 2 + 0.05f;
+					(connectionComponent->m_sprite.verticies[0].position[1] + connectionComponent->m_sprite.verticies[1].position[1]) / 2 + 0.05f;
 
 				float compenent2XCenter =
-					(connectionComponent->connectedTo->sprite.verticies[0].position[0] + connectionComponent->connectedTo->sprite.verticies[1].position[0]) / 2;
+					(connectionComponent->m_connectedTo->m_sprite.verticies[0].position[0] + connectionComponent->m_connectedTo->m_sprite.verticies[1].position[0]) / 2;
 				float compenent2YCenter =
-					(connectionComponent->connectedTo->sprite.verticies[0].position[1] + connectionComponent->connectedTo->sprite.verticies[1].position[1]) / 2 + 0.05f;
+					(connectionComponent->m_connectedTo->m_sprite.verticies[0].position[1] + connectionComponent->m_connectedTo->m_sprite.verticies[1].position[1]) / 2 + 0.05f;
 
 				Sprite blackLine = spriteManager.CreateSprite(nameTextureLocationMapping["linePath"], compenent1XCenter, compenent1YCenter, compenent2XCenter, compenent2YCenter, 0.1f);
 
@@ -290,31 +290,31 @@ void Program::AddSpritesToVertexBuffer()
 	{
 		// Draws all the Entities
 		for (int j = 0; j < 6; ++j)
-			verticies.push_back(entities[i]->sprite.verticies[j]);
+			verticies.push_back(entities[i]->m_sprite.verticies[j]);
 
-		for (const ConnectionComponent* connectionComponent : entities[i]->components)
+		for (const ConnectionComponent* connectionComponent : entities[i]->m_components)
 		{
 			for (int j = 0; j < 6; ++j)
-				verticies.push_back(connectionComponent->sprite.verticies[j]);
+				verticies.push_back(connectionComponent->m_sprite.verticies[j]);
 		}
 	}
 }
 
 void Program::AddHighlightBoxToEntity(Entity* entity)
 {
-	Entity selectionBox(spriteManager.CreateSprite(nameTextureLocationMapping["selectionBoxPath"], entity->sprite.m_xPos, entity->sprite.m_yPos, 1));
+	Entity selectionBox(spriteManager.CreateSprite(nameTextureLocationMapping["selectionBoxPath"], entity->m_sprite.m_xPos, entity->m_sprite.m_yPos, 1));
 	for (int j = 0; j < 6; ++j)
 	{
-		verticies.push_back(selectionBox.sprite.verticies[j]);
+		verticies.push_back(selectionBox.m_sprite.verticies[j]);
 	}
 }
 
 void Program::DeleteEntity(Entity* entity)
 {
-	for (auto component : entity->components)
+	for (auto component : entity->m_components)
 	{
-		if(component->connectedTo != NULL)
-			(component->connectedTo)->connectedTo = NULL;
+		if(component->m_connectedTo != NULL)
+			(component->m_connectedTo)->m_connectedTo = NULL;
 	}
 
 	auto it = std::find(selectedEntities.begin(), selectedEntities.end(),
@@ -380,13 +380,13 @@ void Program::ResetFrameState()
 
 void Program::HandleCopyDeletePaste()
 {
-	if (inputHandler.currentInputEvent == InputEvents::COPYING)
+	if (inputHandler.m_currentInputEvent == InputEvents::COPYING)
 			CopySelection();
 
-	else if (inputHandler.currentInputEvent == InputEvents::PASTING && !copiedEntities.empty())
+	else if (inputHandler.m_currentInputEvent == InputEvents::PASTING && !copiedEntities.empty())
 		PasteEntities();
 
-	else if (inputHandler.currentInputEvent == InputEvents::DELETING)
+	else if (inputHandler.m_currentInputEvent == InputEvents::DELETING)
 	{
 		int size = selectedEntities.size();
 		for (int i = size-1; i >= 0; --i)
@@ -400,7 +400,7 @@ void Program::HandleEntitySelectionFromMenu()
 {
 	selected = gui.DrawMenu(spriteManager, nameTextureLocationMapping, inputHandler);
 
-	if (inputHandler.currentInputEvent == InputEvents::MOUSE_DRAG && selected != Selectable::NONE)
+	if (inputHandler.m_currentInputEvent == InputEvents::MOUSE_DRAG && selected != Selectable::NONE)
 		AddMenuSelectedEntity();
 	else
 		selected = Selectable::NONE;
@@ -409,35 +409,35 @@ void Program::HandleEntitySelectionFromMenu()
 void Program::HandleMenuSelectedEntityPlacement()
 {
 
-	if (tempEntity != NULL && inputHandler.currentInputEvent == InputEvents::MOUSE_RELEASE && ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem | ImGuiHoveredFlags_AnyWindow))
+	if (tempEntity != NULL && inputHandler.m_currentInputEvent == InputEvents::MOUSE_RELEASE && ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem | ImGuiHoveredFlags_AnyWindow))
 	{
 		delete tempEntity;
 		tempEntity = NULL;
 		entities.pop_back();
 	}
 
-	else if (tempEntity != NULL && inputHandler.currentInputEvent == InputEvents::MOUSE_RELEASE)
+	else if (tempEntity != NULL && inputHandler.m_currentInputEvent == InputEvents::MOUSE_RELEASE)
 		tempEntity = NULL;
 }
 
 void Program::HandleEntitySelection()
 {
-	if (inputHandler.currentInputEvent == InputEvents::MOUSE_DRAG && tempEntity == NULL
-		&& !selecting && collisionManager.clickedEntity == NULL && connectionComponent == NULL)
+	if (inputHandler.m_currentInputEvent == InputEvents::MOUSE_DRAG && tempEntity == NULL
+		&& !selecting && collisionManager.m_clickedEntity == NULL && connectionComponent == NULL)
 	{
 		mouseStartXPos = inputHandler.mouseXPos;
 		mouseStartYPos = inputHandler.mouseYPos;
 		selecting = true;
 	}
-	else if (inputHandler.currentInputEvent == InputEvents::LEFT_MOUSE_CLICKED && !IsEntityInSelectedEntites(collisionManager.clickedEntity))
+	else if (inputHandler.m_currentInputEvent == InputEvents::LEFT_MOUSE_CLICKED && !IsEntityInSelectedEntites(collisionManager.m_clickedEntity))
 	{
 		selecting = false;
 		selectedEntities.clear();
 	}
 
-	if (inputHandler.currentInputEvent == InputEvents::MOUSE_RELEASE && selecting && !collisionManager.IsEntityBeingDragged(inputHandler.currentInputEvent))
+	if (inputHandler.m_currentInputEvent == InputEvents::MOUSE_RELEASE && selecting && !collisionManager.IsEntityBeingDragged(inputHandler.m_currentInputEvent))
 		AddEntitiesToSelection();
-	else if (selecting && !collisionManager.IsEntityBeingDragged(inputHandler.currentInputEvent))
+	else if (selecting && !collisionManager.IsEntityBeingDragged(inputHandler.m_currentInputEvent))
 	{
 		mouseEndXPos = inputHandler.mouseXPos;
 		mouseEndYPos = inputHandler.mouseYPos;
@@ -446,7 +446,7 @@ void Program::HandleEntitySelection()
 
 		for (int j = 0; j < 6; ++j)
 		{
-			verticies.push_back(selectionBox.sprite.verticies[j]);
+			verticies.push_back(selectionBox.m_sprite.verticies[j]);
 		}
 	}
 
@@ -459,16 +459,16 @@ void Program::HandleEntitySelection()
 
 void Program::HandleUserInteractionWithEntity()
 {
-	if (collisionManager.IsEntityBeingDragged(inputHandler.currentInputEvent) && selectedEntities.size() > 0
-		&& IsEntityInSelectedEntites(collisionManager.clickedEntity))
+	if (collisionManager.IsEntityBeingDragged(inputHandler.m_currentInputEvent) && selectedEntities.size() > 0
+		&& IsEntityInSelectedEntites(collisionManager.m_clickedEntity))
 	{
 		float centerX = 0.0f;
 		float centerY = 0.0f;
 
 		for (int i = 0; i < selectedEntities.size(); ++i)
 		{
-			centerX += (selectedEntities[i]->sprite.verticies[0].position[0] + selectedEntities[i]->sprite.verticies[2].position[0]) / 2;
-			centerY += (selectedEntities[i]->sprite.verticies[0].position[1] + selectedEntities[i]->sprite.verticies[2].position[1]) / 2;
+			centerX += (selectedEntities[i]->m_sprite.verticies[0].position[0] + selectedEntities[i]->m_sprite.verticies[2].position[0]) / 2;
+			centerY += (selectedEntities[i]->m_sprite.verticies[0].position[1] + selectedEntities[i]->m_sprite.verticies[2].position[1]) / 2;
 		}
 
 		centerX /= selectedEntities.size();
@@ -482,15 +482,15 @@ void Program::HandleUserInteractionWithEntity()
 			selectedEntities[i]->MoveAlongVector(displacementX, displacementY);
 		}
 	}
-	else if (collisionManager.IsEntityBeingDragged(inputHandler.currentInputEvent))
+	else if (collisionManager.IsEntityBeingDragged(inputHandler.m_currentInputEvent))
 	{
-		collisionManager.clickedEntity->MoveToPoint(inputHandler.mouseXPos, inputHandler.mouseYPos);
+		collisionManager.m_clickedEntity->MoveToPoint(inputHandler.mouseXPos, inputHandler.mouseYPos);
 	}
 	else
 	{
 		for (int i = 0; i < entities.size(); ++i)
 		{
-			if (collisionManager.IsSpriteClicked(entities[i]->sprite, inputHandler.mouseXPos, inputHandler.mouseYPos, inputHandler.currentInputEvent))
+			if (collisionManager.IsSpriteClicked(entities[i]->m_sprite, inputHandler.mouseXPos, inputHandler.mouseYPos, inputHandler.m_currentInputEvent))
 			{
 				AttachClickedComponent(i);
 				break;
@@ -498,7 +498,7 @@ void Program::HandleUserInteractionWithEntity()
 		}
 	}
 
-	if (connectionComponent != NULL && inputHandler.currentInputEvent == InputEvents::LEFT_MOUSE_CLICKED && !holdingComponent)
+	if (connectionComponent != NULL && inputHandler.m_currentInputEvent == InputEvents::LEFT_MOUSE_CLICKED && !holdingComponent)
 		connectionComponent = NULL;
 }
 

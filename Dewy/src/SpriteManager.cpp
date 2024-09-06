@@ -3,11 +3,11 @@
 
 SpriteManager::SpriteManager(std::vector<std::string> textureLocations) : m_textureLocations(textureLocations)
 {
-	numberOfTextures = m_textureLocations.size();
-	textureSlots = new int[numberOfTextures];
+	m_numberOfTextures = m_textureLocations.size();
+	m_textureSlots = new int[m_numberOfTextures];
 
-	for (int i = 0; i < numberOfTextures; ++i)
-		textureSlots[i] = i + 1;
+	for (int i = 0; i < m_numberOfTextures; ++i)
+		m_textureSlots[i] = i + 1;
 }
 
 SpriteManager::SpriteManager(std::map<std::string, std::string> nameTextureLocationMapping)
@@ -17,16 +17,16 @@ SpriteManager::SpriteManager(std::map<std::string, std::string> nameTextureLocat
 		m_textureLocations.push_back(pair.second);
 	}
 
-	numberOfTextures = m_textureLocations.size();
-	textureSlots = new int[numberOfTextures];
+	m_numberOfTextures = m_textureLocations.size();
+	m_textureSlots = new int[m_numberOfTextures];
 
-	for (int i = 0; i < numberOfTextures; ++i)
-		textureSlots[i] = i + 1;
+	for (int i = 0; i < m_numberOfTextures; ++i)
+		m_textureSlots[i] = i + 1;
 }
 
 SpriteManager::~SpriteManager()
 {
-	delete [] textureSlots;
+	delete [] m_textureSlots;
 }
 
 void SpriteManager::BindTextures()

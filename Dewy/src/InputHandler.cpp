@@ -9,8 +9,8 @@ float InputHandler::m_zoomLevel = 1;
 float InputHandler::m_prevZoomLevel = 1;
 glm::mat4  InputHandler::m_proj;
 
-InputEvents InputHandler::currentInputEvent = InputEvents::NONE;
-InputEvents InputHandler::previousInputEvent = InputEvents::NONE;
+InputEvents InputHandler::m_currentInputEvent = InputEvents::NONE;
+InputEvents InputHandler::m_previousInputEvent = InputEvents::NONE;
 
 bool InputHandler::m_inputReceived = false;
 bool InputHandler::m_zoomUsed = false;
@@ -30,11 +30,11 @@ void InputHandler::mouse_button_callback(GLFWwindow* window, int button, int act
 
 	if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
 	{
-		currentInputEvent = InputEvents::LEFT_MOUSE_CLICKED;
+		m_currentInputEvent = InputEvents::LEFT_MOUSE_CLICKED;
 		std::cout << mouseXPos << " " << mouseYPos << std::endl;
 	}
 	else if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
-		currentInputEvent = InputEvents::MOUSE_RELEASE;
+		m_currentInputEvent = InputEvents::MOUSE_RELEASE;
 }
 
 void InputHandler::cursor_position_callback(GLFWwindow* window, double xpos, double ypos)
@@ -61,7 +61,7 @@ void InputHandler::cursor_position_callback(GLFWwindow* window, double xpos, dou
 	if ((glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) && !m_inputReceived)
 	{
 		m_inputReceived = true;
-		currentInputEvent = InputEvents::MOUSE_DRAG;
+		m_currentInputEvent = InputEvents::MOUSE_DRAG;
 	}
 }
 
@@ -70,17 +70,17 @@ void InputHandler::key_callback(GLFWwindow* window, int key, int scancode, int a
 	m_inputReceived = true;
 	if (action == GLFW_PRESS && mods == GLFW_MOD_CONTROL && key == GLFW_KEY_C )
 	{
-		currentInputEvent = InputEvents::COPYING;
+		m_currentInputEvent = InputEvents::COPYING;
 		std::cout << "Copying\n";
 	}
 	else if (action == GLFW_PRESS && mods == GLFW_MOD_CONTROL && key == GLFW_KEY_V)
 	{
-		currentInputEvent = InputEvents::PASTING;
+		m_currentInputEvent = InputEvents::PASTING;
 		std::cout << "Pasting\n";
 	}
 	else if (action == GLFW_PRESS && key == GLFW_KEY_BACKSPACE)
 	{
-		currentInputEvent = InputEvents::DELETING;
+		m_currentInputEvent = InputEvents::DELETING;
 		std::cout << "Deleting\n";
 	}
 }
@@ -108,13 +108,13 @@ void InputHandler::UpdateInput(glm::mat4 proj)
 	if (m_zoomUsed)
 		m_zoomUsed = false;
 
-	if (currentInputEvent == InputEvents::MOUSE_DRAG)
+	if (m_currentInputEvent == InputEvents::MOUSE_DRAG)
 		return;
 
 	else if (!m_inputReceived)
-		currentInputEvent = InputEvents::NONE;
+		m_currentInputEvent = InputEvents::NONE;
 
-	previousInputEvent = currentInputEvent;
+	m_previousInputEvent = m_currentInputEvent;
 	m_inputReceived = false;
 
 }
