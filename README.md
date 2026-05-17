@@ -1,0 +1,1 @@
+A digital logic and circuit simulator with a custom renderer built from scratch in C/C++ using OpenGL. The application allows users to construct complex digital circuits from primitive logic gates, visualize signal propagation in real time, and interactively design and test combinational logic systems.
