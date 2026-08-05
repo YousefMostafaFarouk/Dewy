@@ -10,6 +10,24 @@
 ![OpenGL](https://img.shields.io/badge/OpenGL-3.3+-5586A4?logo=opengl&logoColor=white)
 ![Platforms](https://img.shields.io/badge/platform-Linux%20%7C%20Windows-6C63FF)
 
+<br>
+
+<table>
+  <tr>
+    <td width="33%"><img src="docs/media/dewy-circuit-demo.gif" alt="Building and simulating a circuit in Dewy"></td>
+    <td width="33%"><img src="docs/media/dewy-editor-workflow.gif" alt="Selecting, copying, pasting, and deleting circuits in Dewy"></td>
+    <td width="33%"><img src="docs/media/dewy-save-load-demo.gif" alt="Saving and loading a JSON circuit in Dewy"></td>
+  </tr>
+  <tr>
+    <td><sub>Build, connect, and simulate live circuits</sub></td>
+    <td><sub>Select, copy, paste, and delete circuit groups</sub></td>
+    <td><sub>Save and reload circuits as JSON</sub></td>
+  </tr>
+</table>
+
+<strong>Dewy is powered by an original custom OpenGL renderer designed and
+built from scratch by me—not a game engine.</strong>
+
 Build circuits by placing gates, wiring their ports, toggling inputs, and watching
 signals propagate in real time. Dewy combines a custom batched OpenGL renderer
 with an interactive ImGui editor and a small digital-logic simulation core.
@@ -28,15 +46,14 @@ with an interactive ImGui editor and a small digital-logic simulation core.
 - Linux, MinGW, and Visual C++ build paths
 - Custom sprite batching, shaders, textures, and collision handling
 
-## Project history and AI disclosure
+## Custom renderer, built from scratch
 
-Dewy's renderer, original editor/main-program code, and circuit simulation core
-were designed and implemented by the project author without AI assistance,
-before modern AI coding tools were capable of reliably producing work of this
-scope. The project was later updated with AI assistance to add JSON circuit
-saving and loading and the incremental topological-order system used for cycle
-prevention. These additions build on top of the author's existing architecture
-and renderer.
+Dewy does not use a game engine. Its rendering layer was designed and
+implemented from scratch by me on top of OpenGL and GLFW. The
+custom renderer owns shader compilation, texture loading and binding, vertex
+buffers and layouts, vertex-array configuration, batched sprite submission,
+projection updates, and the final draw calls. The renderer, original editor,
+and simulation architecture all predate the later AI-assisted feature update.
 
 ## Quick start
 
@@ -248,3 +265,13 @@ Dewy/
 ├── examples/                   Example JSON circuits
 └── tests/                      Persistence and graph-ordering tests
 ```
+
+## Project history and AI disclosure
+
+Dewy's renderer, original editor/main-program code, and circuit simulation core
+were designed and implemented by me without AI assistance,
+before modern AI coding tools were capable of reliably producing work of this
+scope. The project was later updated with AI assistance to add JSON circuit
+saving and loading and the incremental topological-order system used for cycle
+prevention. These additions build on top of my existing architecture
+and renderer.
