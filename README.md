@@ -26,7 +26,7 @@
 </table>
 
 <strong>Dewy is powered by an original custom OpenGL renderer designed and
-built from scratch by me—not a game engine.</strong>
+built from scratch.</strong>
 
 Build circuits by placing gates, wiring their ports, toggling inputs, and watching
 signals propagate in real time. Dewy combines a custom batched OpenGL renderer
@@ -49,7 +49,7 @@ with an interactive ImGui editor and a small digital-logic simulation core.
 ## Custom renderer, built from scratch
 
 Dewy does not use a game engine. Its rendering layer was designed and
-implemented from scratch by me on top of OpenGL and GLFW. The
+implemented from scratch on top of OpenGL and GLFW. The
 custom renderer owns shader compilation, texture loading and binding, vertex
 buffers and layouts, vertex-array configuration, batched sprite submission,
 projection updates, and the final draw calls. The renderer, original editor,
@@ -269,7 +269,7 @@ Dewy/
 ## Project history and AI disclosure
 
 Dewy's renderer, original editor/main-program code, and circuit simulation core
-were designed and implemented by me without AI assistance,
+were designed and implemented without AI assistance,
 before modern AI coding tools were capable of reliably producing work of this
 scope. The project was later updated with AI assistance to add JSON circuit
 saving and loading and the incremental topological-order system used for cycle
