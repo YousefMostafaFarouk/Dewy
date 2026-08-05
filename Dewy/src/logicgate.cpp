@@ -1,4 +1,4 @@
-#include "logicgate.h"
+#include "Logicgate.h"
 #include <iostream>
 
 LogicGate::LogicGate(LogicGatesTypes type, const Sprite& m_sprite, const Sprite& componentSprite)

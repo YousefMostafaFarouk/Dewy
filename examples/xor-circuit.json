@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "entities": [
+    {"id": 0, "type": "button", "x": -4, "y": 1.5, "state": false},
+    {"id": 1, "type": "button", "x": -4, "y": -1.5, "state": false},
+    {"id": 2, "type": "xor", "x": -1, "y": 0, "state": false},
+    {"id": 3, "type": "bulb", "x": 2.5, "y": 0, "state": false}
+  ],
+  "connections": [
+    {"from_entity": 0, "from_component": 1, "to_entity": 2, "to_component": 0},
+    {"from_entity": 1, "from_component": 1, "to_entity": 2, "to_component": 1},
+    {"from_entity": 2, "from_component": 2, "to_entity": 3, "to_component": 0}
+  ]
+}

@@ -25,6 +25,11 @@
 mono_crash.*
 
 # Build results
+[Bb]uild/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+circuits/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
@@ -369,4 +374,3 @@ MigrationBackup/
 
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
-

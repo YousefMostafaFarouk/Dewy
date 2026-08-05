@@ -2,6 +2,7 @@
 #include <vector>
 #include <string>
 #include <map>
+#include <unordered_map>
 #include "Texture.h"
 #include "Sprite.h"
 
@@ -20,9 +21,9 @@ public:
 	Sprite CreateSprite(std::string textureLocation, float xPos, float yPos, float size);
 	Sprite CreateSprite(std::string textureLocation, float x1Pos, float y1Pos, float x2Pos, float y2Pos, float size, bool centered=true);
 	int GetTextureSlot(std::string textureLocation);
+	unsigned int GetTextureRendererId(const std::string& textureLocation) const;
 private:
 	std::unordered_map<std::string, int> m_textureId;
 	std::vector<Texture> m_textures;
 	std::vector<std::string> m_textureLocations;
 };
-

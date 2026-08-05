@@ -1,5 +1,6 @@
 #include "Renderer.h"
 #include <iostream>
+#include <stdexcept>
 
 void GLClearError()
 {
@@ -24,7 +25,7 @@ Renderer::Renderer(unsigned int height, unsigned int width, const std::string& n
 {
     /* Initialize the library */
     if (!glfwInit())
-        std::cout << "not working glfw";
+        throw std::runtime_error("Failed to initialize GLFW");
        
 
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
@@ -36,6 +37,7 @@ Renderer::Renderer(unsigned int height, unsigned int width, const std::string& n
     if (!m_window)
     {
         glfwTerminate();
+        throw std::runtime_error("Failed to create the GLFW window");
     }
 
     /* Make the window's context current */
@@ -44,9 +46,23 @@ Renderer::Renderer(unsigned int height, unsigned int width, const std::string& n
     //enables vsync
     glfwSwapInterval(1);
 
-    // You have to initalize after creating the GLFW context
+    // GLEW is the loader used by the existing Windows build. Linux's GLVND
+    // exports the OpenGL 3.3 entry points directly for both GLX and EGL.
+#if !defined(__linux__)
+    glewExperimental = GL_TRUE;
+    const GLenum glewStatus = glewInit();
+    if (glewStatus != GLEW_OK)
+    {
+        glfwDestroyWindow(m_window);
+        glfwTerminate();
+        throw std::runtime_error(
+            reinterpret_cast<const char*>(glewGetErrorString(glewStatus)));
+    }
+
+    // GLEW can leave a benign GL_INVALID_ENUM behind on core profiles.
+    GLClearError();
+#endif
     GLCall(glClearColor(0.0f, 0.0f, 0.0f, 1.0f));
-    glewInit();
 }
 
 void Renderer::Clear() const
@@ -56,6 +72,7 @@ void Renderer::Clear() const
 
 Renderer::~Renderer()
 {
+    glfwDestroyWindow(m_window);
     glfwTerminate();
 }
 
@@ -68,4 +85,3 @@ void Renderer::Draw(const VertexArray& va, const IndexBuffer& ib, const Shader& 
     GLCall(glDrawElements(GL_TRIANGLES, ib.GetCount(), GL_UNSIGNED_INT, nullptr));
     glfwSwapBuffers(m_window);
 }
-

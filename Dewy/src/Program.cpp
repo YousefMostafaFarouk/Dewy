@@ -1,10 +1,17 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm> 
 #include <iostream>
+#include <filesystem>
+#include <stdexcept>
+#include <unordered_map>
 #include "Program.h"
-#include "logicgate.h"
+#include "Logicgate.h"
 #include "Button.h"
 #include "LightBulb.h"
+
+#ifndef DEWY_SHADER_PATH
+#define DEWY_SHADER_PATH "../Renderer/res/shaders/basic.shader"
+#endif
 
 Program::Program() :
 	nameTextureLocationMapping({
@@ -23,9 +30,9 @@ Program::Program() :
 		}),
 	proj(glm::ortho(-8.0f, 8.0f, -4.5f, 4.5f, -1.0f, 1.0f)),
 	spriteManager(nameTextureLocationMapping),
-	spriteRenderer(720, 1280, "LogicGateSimulator", "../Renderer/res/shaders/basic.shader", spriteManager.m_textureSlots, spriteManager.m_numberOfTextures, proj),
-	gui(spriteRenderer),
-	inputHandler(spriteRenderer.getWindowPointer())
+	spriteRenderer(720, 1280, "LogicGateSimulator", DEWY_SHADER_PATH, spriteManager.m_textureSlots, spriteManager.m_numberOfTextures, proj),
+	inputHandler(spriteRenderer.getWindowPointer()),
+	gui(spriteRenderer)
 {
 	spriteManager.BindTextures();
 	GLCall(glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA));
@@ -43,6 +50,11 @@ Program::Program() :
 	mouseStartYPos = 0;
 	mouseEndXPos = 0;
 	mouseEndYPos = 0;
+}
+
+Program::~Program()
+{
+	ClearCircuit();
 }
 
 void Program::Run()
@@ -67,6 +79,180 @@ void Program::Run()
 	}
 }
 
+void Program::HandleCircuitFileAction(const CircuitFileRequest& request)
+{
+	if (request.action == CircuitFileAction::NONE)
+		return;
+
+	try
+	{
+		const std::filesystem::path path(request.path);
+		if (request.action == CircuitFileAction::SAVE)
+		{
+			CircuitSerializer::Save(path, BuildCircuitDocument());
+			circuitFileStatus = "Saved circuit to " + path.string();
+		}
+		else
+		{
+			LoadCircuit(path);
+		}
+		circuitFileStatusIsError = false;
+	}
+	catch (const std::exception& error)
+	{
+		circuitFileStatus = error.what();
+		circuitFileStatusIsError = true;
+	}
+}
+
+void Program::LoadCircuit(const std::filesystem::path& path)
+{
+	LoadCircuitDocument(CircuitSerializer::Load(path));
+	circuitFileStatus = "Loaded circuit from " + path.string();
+	circuitFileStatusIsError = false;
+}
+
+CircuitDocument Program::BuildCircuitDocument() const
+{
+	CircuitDocument document;
+	std::unordered_map<const Entity*, std::size_t> entityIds;
+
+	for (std::size_t index = 0; index < entities.size(); ++index)
+	{
+		const Entity* entity = entities[index];
+		entityIds.emplace(entity, index);
+
+		CircuitEntityRecord record;
+		record.id = index;
+		record.x = entity->m_sprite.m_xPos;
+		record.y = entity->m_sprite.m_yPos;
+		record.state = entity->m_state;
+
+		if (const auto* gate = dynamic_cast<const LogicGate*>(entity))
+		{
+			switch (gate->m_type)
+			{
+			case LogicGatesTypes::NOT: record.type = "not"; break;
+			case LogicGatesTypes::OR: record.type = "or"; break;
+			case LogicGatesTypes::AND: record.type = "and"; break;
+			case LogicGatesTypes::XOR: record.type = "xor"; break;
+			default: throw std::runtime_error("Cannot save an unknown logic gate type");
+			}
+		}
+		else if (dynamic_cast<const Button*>(entity))
+			record.type = "button";
+		else if (dynamic_cast<const LightBulb*>(entity))
+			record.type = "bulb";
+		else
+			throw std::runtime_error("Cannot save an unknown circuit entity type");
+
+		document.entities.push_back(record);
+	}
+
+	for (std::size_t entityIndex = 0; entityIndex < entities.size(); ++entityIndex)
+	{
+		const Entity* entity = entities[entityIndex];
+		for (std::size_t componentIndex = 0; componentIndex < entity->m_components.size(); ++componentIndex)
+		{
+			const ConnectionComponent* component = entity->m_components[componentIndex];
+			if (!component->m_outPutComponenet || component->m_connectedTo == nullptr)
+				continue;
+
+			const ConnectionComponent* connected = component->m_connectedTo;
+			const auto connectedEntity = entityIds.find(connected->m_parentEntity);
+			if (connectedEntity == entityIds.end())
+				throw std::runtime_error("Cannot save a connection to an entity outside the circuit");
+
+			const auto& targetComponents = connected->m_parentEntity->m_components;
+			const auto target = std::find(targetComponents.begin(), targetComponents.end(), connected);
+			if (target == targetComponents.end())
+				throw std::runtime_error("Cannot save a connection with an unknown target component");
+
+			document.connections.push_back({
+				entityIndex,
+				componentIndex,
+				connectedEntity->second,
+				static_cast<std::size_t>(std::distance(targetComponents.begin(), target))
+			});
+		}
+	}
+
+	return document;
+}
+
+void Program::LoadCircuitDocument(const CircuitDocument& document)
+{
+	std::vector<Entity*> loadedEntities;
+	std::unordered_map<std::size_t, Entity*> entitiesById;
+	TopologicalOrder<Entity*> loadedOrder;
+
+	try
+	{
+		for (const CircuitEntityRecord& record : document.entities)
+		{
+			Selectable type = Selectable::NONE;
+			if (record.type == "not") type = Selectable::NOT;
+			else if (record.type == "or") type = Selectable::OR;
+			else if (record.type == "and") type = Selectable::AND;
+			else if (record.type == "xor") type = Selectable::XOR;
+			else if (record.type == "bulb") type = Selectable::BULB;
+			else if (record.type == "button") type = Selectable::BUTTON;
+			else throw std::runtime_error("Unsupported circuit entity type: " + record.type);
+
+			Entity* entity = CreateEntity(type, record.x, record.y);
+			entity->m_state = record.state;
+			loadedEntities.push_back(entity);
+			entitiesById.emplace(record.id, entity);
+		}
+
+		std::vector<std::pair<Entity*, Entity*>> graphEdges;
+		graphEdges.reserve(document.connections.size());
+		for (const CircuitConnectionRecord& record : document.connections)
+			graphEdges.emplace_back(entitiesById.at(record.fromEntity), entitiesById.at(record.toEntity));
+
+		if (!loadedOrder.Reset(loadedEntities, graphEdges))
+			throw std::runtime_error("Circuit connections contain a cycle");
+
+		for (const CircuitConnectionRecord& record : document.connections)
+		{
+			Entity* fromEntity = entitiesById.at(record.fromEntity);
+			Entity* toEntity = entitiesById.at(record.toEntity);
+			ConnectionComponent* output = fromEntity->m_components.at(record.fromComponent);
+			ConnectionComponent* input = toEntity->m_components.at(record.toComponent);
+			output->m_connectedTo = input;
+			input->m_connectedTo = output;
+		}
+	}
+	catch (...)
+	{
+		for (Entity* entity : loadedEntities)
+			delete entity;
+		throw;
+	}
+
+	ClearCircuit();
+	entities = std::move(loadedEntities);
+	circuitOrder = std::move(loadedOrder);
+}
+
+void Program::ClearCircuit()
+{
+	for (Entity* entity : entities)
+		delete entity;
+	entities.clear();
+
+	for (Entity* entity : copiedEntities)
+		delete entity;
+	copiedEntities.clear();
+
+	selectedEntities.clear();
+	circuitOrder.Clear();
+	tempEntity = nullptr;
+	connectionComponent = nullptr;
+	collisionManager.m_clickedEntity = nullptr;
+	selected = Selectable::NONE;
+}
+
 void Program::AddMenuSelectedEntity()
 {
 	if (tempEntity == NULL)
@@ -74,6 +260,7 @@ void Program::AddMenuSelectedEntity()
 		tempEntity = CreateEntity();
 		selected = Selectable::NONE;
 		entities.push_back(tempEntity);
+		circuitOrder.AddNode(tempEntity);
 	}
 	else
 		entities[entities.size() - 1]->MoveToPoint(inputHandler.mouseXPos, inputHandler.mouseYPos);
@@ -147,6 +334,21 @@ void Program::PasteEntities()
 	{
 		copiedEntities[i]->MoveAlongVector(displacementX, displacementY);
 		entities.push_back(copiedEntities[i]);
+		circuitOrder.AddNode(copiedEntities[i]);
+	}
+
+	for (Entity* entity : copiedEntities)
+	{
+		for (ConnectionComponent* component : entity->m_components)
+		{
+			if (component->m_outPutComponenet && component->m_connectedTo != nullptr &&
+				!circuitOrder.TryAddEdge(entity, component->m_connectedTo->m_parentEntity))
+			{
+				DisconnectComponent(component);
+				circuitFileStatus = "A copied connection was removed because it would create a cycle";
+				circuitFileStatusIsError = true;
+			}
+		}
 	}
 	copiedEntities.clear();
 	selectedEntities.clear();
@@ -191,31 +393,21 @@ void Program::AttachClickedComponent(int i)
 			move = false;
 			if (connectionComponent == NULL)
 			{
-				std::cout << "pressed";
-				bool output = false;
-				if (component->m_connectedTo != NULL && !component->m_outPutComponenet)
-				{
-					component->m_connectedTo->m_connectedTo = NULL;
-					output = true;
-				}
-				component->m_connectedTo = NULL;
+				const bool disconnectedInput =
+					component->m_connectedTo != NULL && !component->m_outPutComponenet;
+				if (component->m_connectedTo != NULL)
+					DisconnectComponent(component);
 
-				if (!output)
+				if (!disconnectedInput)
 				{
-
-				connectionComponent = component;
-				holdingComponent = true;
+					connectionComponent = component;
+					holdingComponent = true;
 				}
 			}
 
-			else if (component->m_parentEntity != connectionComponent->m_parentEntity && (connectionComponent->m_outPutComponenet && !component->m_outPutComponenet || !connectionComponent->m_outPutComponenet && component->m_outPutComponenet))
+			else if (connectionComponent->m_outPutComponenet != component->m_outPutComponenet)
 			{
-				if (component->m_connectedTo != NULL && component->m_connectedTo->m_outPutComponenet)
-					component->m_connectedTo->m_connectedTo = NULL;
-
-				component->m_connectedTo = connectionComponent;
-				connectionComponent->m_connectedTo = component;
-				std::cout << "added to" << (int)((LogicGate*)component->m_parentEntity)->m_type << std::endl;
+				TryConnectComponents(connectionComponent, component);
 				connectionComponent = NULL;				
 			}
 			else
@@ -241,6 +433,93 @@ void Program::AttachClickedComponent(int i)
 	
 }
 
+void Program::DisconnectComponent(ConnectionComponent* component)
+{
+	if (component == nullptr || component->m_connectedTo == nullptr)
+		return;
+
+	ConnectionComponent* connected = component->m_connectedTo;
+	ConnectionComponent* output = component->m_outPutComponenet ? component : connected;
+	ConnectionComponent* input = component->m_outPutComponenet ? connected : component;
+
+	if (output->m_outPutComponenet && !input->m_outPutComponenet)
+	{
+		bool anotherWireJoinsTheEntities = false;
+		for (const ConnectionComponent* otherOutput : output->m_parentEntity->m_components)
+		{
+			if (otherOutput != output && otherOutput->m_outPutComponenet &&
+				otherOutput->m_connectedTo != nullptr &&
+				otherOutput->m_connectedTo->m_parentEntity == input->m_parentEntity)
+			{
+				anotherWireJoinsTheEntities = true;
+				break;
+			}
+		}
+		if (!anotherWireJoinsTheEntities)
+			circuitOrder.RemoveEdge(output->m_parentEntity, input->m_parentEntity);
+	}
+
+	component->m_connectedTo = nullptr;
+	connected->m_connectedTo = nullptr;
+}
+
+void Program::RestoreConnection(ConnectionComponent* output, ConnectionComponent* input)
+{
+	if (output == nullptr || input == nullptr)
+		return;
+
+	if (circuitOrder.TryAddEdge(output->m_parentEntity, input->m_parentEntity))
+	{
+		output->m_connectedTo = input;
+		input->m_connectedTo = output;
+	}
+}
+
+bool Program::TryConnectComponents(ConnectionComponent* first, ConnectionComponent* second)
+{
+	if (first == nullptr || second == nullptr ||
+		first->m_outPutComponenet == second->m_outPutComponenet)
+	{
+		return false;
+	}
+
+	ConnectionComponent* output = first->m_outPutComponenet ? first : second;
+	ConnectionComponent* input = first->m_outPutComponenet ? second : first;
+	if (output->m_parentEntity == input->m_parentEntity)
+	{
+		circuitFileStatus = "Connection rejected: an entity cannot connect to itself";
+		circuitFileStatusIsError = true;
+		return false;
+	}
+
+	if (output->m_connectedTo == input && input->m_connectedTo == output)
+		return true;
+
+	ConnectionComponent* previousOutputTarget = output->m_connectedTo;
+	ConnectionComponent* previousInputSource = input->m_connectedTo;
+	if (previousOutputTarget != nullptr)
+		DisconnectComponent(output);
+	if (input->m_connectedTo != nullptr)
+		DisconnectComponent(input);
+
+	if (circuitOrder.TryAddEdge(output->m_parentEntity, input->m_parentEntity))
+	{
+		output->m_connectedTo = input;
+		input->m_connectedTo = output;
+		circuitFileStatus = "Connection added";
+		circuitFileStatusIsError = false;
+		return true;
+	}
+
+	RestoreConnection(output, previousOutputTarget);
+	if (previousInputSource != output)
+		RestoreConnection(previousInputSource, input);
+
+	circuitFileStatus = "Connection rejected: it would create a cycle";
+	circuitFileStatusIsError = true;
+	return false;
+}
+
 void Program::AddSpritesToVertexBuffer()
 {
 	// Draws the line connecting a component and the mouse cursor
@@ -264,7 +543,9 @@ void Program::AddSpritesToVertexBuffer()
 	{
 		for (const ConnectionComponent* connectionComponent : entities[i]->m_components)
 		{
-			if (connectionComponent->m_connectedTo != NULL)
+			// Connections are stored symmetrically on both ports. Render only
+			// from the output endpoint so each logical wire produces one line.
+			if (connectionComponent->m_outPutComponenet && connectionComponent->m_connectedTo != NULL)
 			{
 
 				float compenent1XCenter =
@@ -311,6 +592,7 @@ void Program::AddHighlightBoxToEntity(Entity* entity)
 
 void Program::DeleteEntity(Entity* entity)
 {
+	circuitOrder.RemoveNode(entity);
 	for (auto component : entity->m_components)
 	{
 		if(component->m_connectedTo != NULL)
@@ -398,7 +680,14 @@ void Program::HandleCopyDeletePaste()
 
 void Program::HandleEntitySelectionFromMenu()
 {
-	selected = gui.DrawMenu(spriteManager, nameTextureLocationMapping, inputHandler);
+	CircuitFileRequest circuitFileRequest;
+	selected = gui.DrawMenu(
+		spriteManager,
+		nameTextureLocationMapping,
+		circuitFileStatus,
+		circuitFileStatusIsError,
+		circuitFileRequest);
+	HandleCircuitFileAction(circuitFileRequest);
 
 	if (inputHandler.m_currentInputEvent == InputEvents::MOUSE_DRAG && selected != Selectable::NONE)
 		AddMenuSelectedEntity();
@@ -411,6 +700,7 @@ void Program::HandleMenuSelectedEntityPlacement()
 
 	if (tempEntity != NULL && inputHandler.m_currentInputEvent == InputEvents::MOUSE_RELEASE && ImGui::IsWindowHovered(ImGuiHoveredFlags_AllowWhenBlockedByActiveItem | ImGuiHoveredFlags_AnyWindow))
 	{
+		circuitOrder.RemoveNode(tempEntity);
 		delete tempEntity;
 		tempEntity = NULL;
 		entities.pop_back();
@@ -504,10 +794,10 @@ void Program::HandleUserInteractionWithEntity()
 
 void Program::UpdateEntitiesStates()
 {
-	for (int i = 0; i < entities.size(); ++i)
-		entities[i]->Reset();
-	for (int i = 0; i < entities.size(); ++i)
-		entities[i]->Update();
+	for (Entity* entity : circuitOrder.Order())
+		entity->Reset();
+	for (Entity* entity : circuitOrder.Order())
+		entity->Update();
 }
 
 bool Program::IsEntityInSelectedEntites(Entity* entity)
@@ -528,24 +818,29 @@ void Program::RenderFrame()
 
 Entity* Program::CreateEntity()
 {
+	return CreateEntity(selected, inputHandler.mouseXPos, inputHandler.mouseYPos);
+}
+
+Entity* Program::CreateEntity(Selectable entityType, float xPosition, float yPosition)
+{
 	float buttonSize = 0.8f;
 	Sprite smDot = spriteManager.CreateSprite(nameTextureLocationMapping["greenDotPath"], 2, 1, 0.090f);
 
-	switch (selected)
+	switch (entityType)
 	{
 	case Selectable::NOT:
-		return new LogicGate(LogicGatesTypes::NOT, spriteManager.CreateSprite(nameTextureLocationMapping["notPath"], inputHandler.mouseXPos, inputHandler.mouseYPos, 1.0f), smDot);
+		return new LogicGate(LogicGatesTypes::NOT, spriteManager.CreateSprite(nameTextureLocationMapping["notPath"], xPosition, yPosition, 1.0f), smDot);
 	case Selectable::OR:
-		return new LogicGate(LogicGatesTypes::OR, spriteManager.CreateSprite(nameTextureLocationMapping["orPath"], inputHandler.mouseXPos, inputHandler.mouseYPos, 1.0f), smDot);
+		return new LogicGate(LogicGatesTypes::OR, spriteManager.CreateSprite(nameTextureLocationMapping["orPath"], xPosition, yPosition, 1.0f), smDot);
 	case Selectable::XOR:
-		return new LogicGate(LogicGatesTypes::XOR, spriteManager.CreateSprite(nameTextureLocationMapping["xorPath"], inputHandler.mouseXPos, inputHandler.mouseYPos, 1.0f), smDot);
+		return new LogicGate(LogicGatesTypes::XOR, spriteManager.CreateSprite(nameTextureLocationMapping["xorPath"], xPosition, yPosition, 1.0f), smDot);
 	case Selectable::AND:
-		return new LogicGate(LogicGatesTypes::AND, spriteManager.CreateSprite(nameTextureLocationMapping["andPath"], inputHandler.mouseXPos, inputHandler.mouseYPos, 1.0f), smDot);
+		return new LogicGate(LogicGatesTypes::AND, spriteManager.CreateSprite(nameTextureLocationMapping["andPath"], xPosition, yPosition, 1.0f), smDot);
 	case Selectable::BULB:
-		return new LightBulb(spriteManager.CreateSprite(nameTextureLocationMapping["offLightBulbPath"], inputHandler.mouseXPos, inputHandler.mouseYPos, 1), smDot,
+		return new LightBulb(spriteManager.CreateSprite(nameTextureLocationMapping["offLightBulbPath"], xPosition, yPosition, 1), smDot,
 			spriteManager.GetTextureSlot(nameTextureLocationMapping["onLightBulbPath"]), spriteManager.GetTextureSlot(nameTextureLocationMapping["offLightBulbPath"]));
 	case Selectable::BUTTON:
-		return new Button(spriteManager.CreateSprite(nameTextureLocationMapping["unPressedButtonPath"], inputHandler.mouseXPos, inputHandler.mouseYPos, 1.0), smDot,
+		return new Button(spriteManager.CreateSprite(nameTextureLocationMapping["unPressedButtonPath"], xPosition, yPosition, 1.0), smDot,
 			spriteManager.CreateSprite(nameTextureLocationMapping["clearPath"], 0.0f, 0.0f, 0.25f * buttonSize), spriteManager.GetTextureSlot(nameTextureLocationMapping["pressedButtonPath"]), spriteManager.GetTextureSlot(nameTextureLocationMapping["unPressedButtonPath"]));
 	default:
 		return NULL;

@@ -31,10 +31,17 @@ SpriteManager::~SpriteManager()
 
 void SpriteManager::BindTextures()
 {
+	m_textures.reserve(m_textureLocations.size());
 	for (int i = 0; i < m_textureLocations.size(); ++i)
 	{
 		m_textureId[m_textureLocations[i]] = i + 1;
 		m_textures.push_back(Texture(m_textureLocations[i]));
+	}
+
+	// Texture construction uses unit zero for upload. Bind every completed
+	// texture afterward so creating texture N+1 cannot overwrite unit N.
+	for (int i = 0; i < m_textures.size(); ++i)
+	{
 		m_textures[i].Bind(i + 1);
 	}
 }
@@ -58,4 +65,13 @@ int SpriteManager::GetTextureSlot(std::string textureLocation)
 		throw std::invalid_argument(errorMessage.c_str());
 	}
 	return m_textureId[textureLocation];
+}
+
+unsigned int SpriteManager::GetTextureRendererId(const std::string& textureLocation) const
+{
+	const auto texture = m_textureId.find(textureLocation);
+	if (texture == m_textureId.end() || texture->second <= 0)
+		throw std::invalid_argument("Can't get texture location " + textureLocation);
+
+	return m_textures.at(static_cast<std::size_t>(texture->second - 1)).GetRendererID();
 }

@@ -11,7 +11,8 @@ Texture::Texture(const std::string filePath)
 	m_localBuffer = stbi_load(filePath.c_str(), &m_width, &m_height, &m_bytesPerPixel, 4);
 
 	// Generates a 2d texture and binds it
-	GLCall(glCreateTextures(GL_TEXTURE_2D, 1, &m_textureID));
+	GLCall(glGenTextures(1, &m_textureID));
+	GLCall(glActiveTexture(GL_TEXTURE0));
 	GLCall(glBindTexture(GL_TEXTURE_2D, m_textureID));
 
 	// Sets how a texture should be magninfied and minimized based on object it is on
@@ -57,12 +58,11 @@ Texture::~Texture()
 void Texture::Bind(unsigned int slot)
 {
 	m_bindSlot = slot;
+	GLCall(glActiveTexture(GL_TEXTURE0 + m_bindSlot));
 	GLCall(glBindTexture(GL_TEXTURE_2D, m_textureID));
-	GLCall(glBindTextureUnit(m_bindSlot, m_textureID));
 }
 
 void Texture::UnBind() const
 {
 	GLCall(glBindTexture(GL_TEXTURE_2D, 0));
 }
-

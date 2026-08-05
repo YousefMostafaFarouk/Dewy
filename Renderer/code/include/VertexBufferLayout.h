@@ -1,6 +1,6 @@
 #pragma once
+#include <type_traits>
 #include <vector>
-#include <GL/glew.h>
 #include "Renderer.h"
 
 struct VertexBufferElement
@@ -10,7 +10,7 @@ struct VertexBufferElement
 	unsigned char normalized;
 
 	VertexBufferElement(unsigned int t, unsigned int c, bool n) :
-		type(t), count(c), normalized(n)
+		count(c), type(t), normalized(n)
 	{}
 
 	static unsigned int GetSizeOfType(unsigned int type)
@@ -37,31 +37,27 @@ public:
 	template<typename T>
 	void Push(unsigned int count)
 	{
-
-	}
-
-	template<>
-	void Push<float>(unsigned int count)
-	{
-		m_elements.push_back({GL_FLOAT, count, GL_FALSE});
-		m_stride += count * VertexBufferElement::GetSizeOfType(GL_FLOAT);
-	}
-
-	template<>
-	void Push<unsigned int>(unsigned int count)
-	{
-		m_elements.push_back({ GL_UNSIGNED_INT, count, GL_FALSE });
-		m_stride += count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_INT);
-	}
-
-	template<>
-	void Push<unsigned char>(unsigned int count)
-	{
-		m_elements.push_back({ GL_UNSIGNED_BYTE, count, GL_TRUE });
-		m_stride += count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_BYTE);
+		if constexpr (std::is_same_v<T, float>)
+		{
+			m_elements.push_back({ GL_FLOAT, count, GL_FALSE });
+			m_stride += count * VertexBufferElement::GetSizeOfType(GL_FLOAT);
+		}
+		else if constexpr (std::is_same_v<T, unsigned int>)
+		{
+			m_elements.push_back({ GL_UNSIGNED_INT, count, GL_FALSE });
+			m_stride += count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_INT);
+		}
+		else if constexpr (std::is_same_v<T, unsigned char>)
+		{
+			m_elements.push_back({ GL_UNSIGNED_BYTE, count, GL_TRUE });
+			m_stride += count * VertexBufferElement::GetSizeOfType(GL_UNSIGNED_BYTE);
+		}
+		else
+		{
+			static_assert(!sizeof(T), "Unsupported vertex attribute type");
+		}
 	}
 
 	inline const std::vector<VertexBufferElement>& GetElements() const { return m_elements; };
 	inline unsigned int GetStride() const { return m_stride; };
 };
-

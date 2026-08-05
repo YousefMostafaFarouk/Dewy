@@ -1,12 +1,18 @@
 #pragma once
+#if defined(__linux__)
+#define GL_GLEXT_PROTOTYPES
+#include <GL/gl.h>
+#else
 #include <GL/glew.h>
+#endif
 #include <GLFW/glfw3.h>
+#include <cassert>
 
 #include "VertexArray.h"
 #include "IndexBuffer.h"
 #include "Shader.h"
 
-#define ASSERT(x) if(!(x)) __debugbreak();
+#define ASSERT(x) assert(x)
 #define GLCall(x) GLClearError();\
     x;\
     ASSERT(GLLogCall(#x, __FILE__, __LINE__))
@@ -39,4 +45,3 @@ public:
     inline void PollEvents() const { glfwPollEvents(); };
 
 };
-

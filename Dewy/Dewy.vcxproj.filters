@@ -924,6 +924,12 @@
     <ClInclude Include="include\CollisionManager.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\CircuitSerializer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\TopologicalOrder.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="include\ConnectionComponent.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -986,7 +992,13 @@
     <ClCompile Include="src\CollisionManager.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\CircuitSerializer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
     <ClCompile Include="src\ConnectionComponent.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Entity.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\Button.cpp">

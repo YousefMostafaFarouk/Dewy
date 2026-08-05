@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "entity.h"
+#include "Entity.h"
 #include "Sprite.h"
 #include "ConnectionComponent.h"
 
