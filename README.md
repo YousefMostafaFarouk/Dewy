@@ -248,17 +248,3 @@ Dewy/
 ├── examples/                   Example JSON circuits
 └── tests/                      Persistence and graph-ordering tests
 ```
-
-## Current constraints
-
-- Each output port currently connects to one input port; explicit fan-out nodes
-  are not implemented yet.
-- The editor currently targets combinational Boolean circuits rather than
-  sequential components such as clocks, latches, or flip-flops.
-
-## Roadmap
-
-- Add explicit wire splitting/fan-out
-- Add undo and redo
-- Add more components, including NAND, NOR, clocks, and flip-flops
-- Add native file-picker dialogs and packaged releases
