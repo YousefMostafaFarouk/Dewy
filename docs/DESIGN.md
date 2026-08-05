@@ -247,13 +247,3 @@ which MSYS2 recommends for new 64-bit Windows builds.
 Manual smoke testing should verify window creation, shader compilation, texture
 loading, entity placement, connection interaction, save, clear/restart, and load.
 
-## 11. Extension points
-
-- New combinational gates can extend `LogicGatesTypes`, entity construction,
-  serialization type mapping, and the object menu.
-- A graph service can own ordering, reachability, and fan-out independently of
-  rendering.
-- Native file dialogs can replace the path field without changing the serializer.
-- Undo/redo can model editor actions as reversible commands.
-- Packaged releases can install assets beside the executable and locate them
-  relative to the executable rather than the working directory.
